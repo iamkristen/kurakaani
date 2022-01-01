@@ -9,12 +9,13 @@ import 'package:kurakaani/constants/constants.dart';
 import 'package:kurakaani/models/message_chat.dart';
 import 'package:kurakaani/providers/auth_provider.dart';
 import 'package:kurakaani/providers/chat_provider.dart';
-import 'package:kurakaani/providers/settings_provider.dart';
+
 import 'package:kurakaani/screens/full_photo.dart';
 import 'package:kurakaani/screens/login_screen.dart';
 import 'package:kurakaani/widgets/loading_view.dart';
 import 'package:kurakaani/widgets/progress.dart';
 import 'package:provider/src/provider.dart';
+
 import 'package:url_launcher/url_launcher.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -103,7 +104,7 @@ class _ChatScreenState extends State<ChatScreen> {
     } else {
       Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => LoginScreen()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
           (Route<dynamic> route) => false);
     }
     if (currentUserId.hashCode <= peerId.hashCode) {
@@ -165,7 +166,7 @@ class _ChatScreenState extends State<ChatScreen> {
       chatProvider.sendMessage(
           content, type, groupChatId, currentUserId, peerId);
       listScrollController.animateTo(0,
-          duration: Duration(milliseconds: 300), curve: Curves.easeOut);
+          duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
     } else {
       Fluttertoast.showToast(
           msg: "Nothing To Send",
@@ -219,7 +220,7 @@ class _ChatScreenState extends State<ChatScreen> {
         centerTitle: true,
         title: Text(
           peerNickname,
-          style: TextStyle(
+          style: const TextStyle(
               fontSize: 40, fontFamily: 'signatra', letterSpacing: 1.5),
         ),
         actions: [
@@ -231,7 +232,7 @@ class _ChatScreenState extends State<ChatScreen> {
               //     settingsProvider.getprefs(FirestoreConstants.phoneNumber)!;
               _callPhoneNumber(peerPhoneNumber);
             },
-            icon: Icon(
+            icon: const Icon(
               Icons.phone_iphone,
               color: Colors.white,
               size: 30,
@@ -269,13 +270,13 @@ class _ChatScreenState extends State<ChatScreen> {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.camera_enhance,
             ),
             onPressed: getImage,
           ),
           IconButton(
-            icon: Icon(Icons.face_retouching_natural),
+            icon: const Icon(Icons.face_retouching_natural),
             onPressed: getSticker,
           ),
           Flexible(
@@ -292,7 +293,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
           IconButton(
-            icon: Icon(Icons.send),
+            icon: const Icon(Icons.send),
             onPressed: () =>
                 onSendMessage(textEditingController.text, TypeMessage.text),
           ),
@@ -341,7 +342,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       alignment: Alignment.centerRight,
                       child: Text(
                         msgChat.content,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: ColorConstants.primaryColor,
                         ),
                       ),
@@ -479,7 +480,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             msgChat.content,
-                            style: TextStyle(color: Colors.white),
+                            style: const TextStyle(color: Colors.white),
                           ),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 15, vertical: 10),
