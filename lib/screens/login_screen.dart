@@ -4,6 +4,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:kurakaani/constants/app_constants.dart';
 import 'package:kurakaani/constants/constants.dart';
 import 'package:kurakaani/providers/auth_provider.dart';
+import 'package:kurakaani/providers/settings_provider.dart';
 import 'package:kurakaani/screens/home_screen.dart';
 import 'package:kurakaani/widgets/progress.dart';
 import 'package:provider/provider.dart';
@@ -19,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     AuthProvider authProvider = Provider.of<AuthProvider>(context);
-
     switch (authProvider.status) {
       case Status.authenticateError:
         Fluttertoast.showToast(msg: "SignIn Failed");

@@ -19,16 +19,17 @@ class _SplashScreenState extends State<SplashScreen> {
   void checkSignedIn() async {
     AuthProvider authProvider = context.read<AuthProvider>();
     bool isLoggedIn = await authProvider.isLoggedIn();
-    if (isLoggedIn) {
+    if (isLoggedIn == true) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => const HomeScreen(),
         ),
       );
+    } else {
+      Navigator.pushReplacement(context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()));
     }
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => const LoginScreen()));
   }
 
   @override
