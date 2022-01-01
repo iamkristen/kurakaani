@@ -31,24 +31,16 @@ class ChatUser {
     String phoneNumber = "";
     try {
       aboutMe = doc.get(FirestoreConstants.aboutMe);
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-    }
+    } catch (e) {}
     try {
       photoUrl = doc.get(FirestoreConstants.photoUrl);
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-    }
+    } catch (e) {}
     try {
       nickName = doc.get(FirestoreConstants.nickname);
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-    }
+    } catch (e) {}
     try {
       phoneNumber = doc.get(FirestoreConstants.phoneNumber);
-    } catch (e) {
-      Fluttertoast.showToast(msg: e.toString());
-    }
+    } catch (e) {}
     return ChatUser(
         id: doc.id,
         photoUrl: photoUrl,
