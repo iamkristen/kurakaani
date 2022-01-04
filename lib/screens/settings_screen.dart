@@ -118,7 +118,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   buildTextField(
       {String? label,
-      String? suffix,
+      String? prefix,
       String? hint,
       String? error,
       TextEditingController? controller,
@@ -132,11 +132,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           style: const TextStyle(color: ColorConstants.primaryText),
           cursorColor: ColorConstants.primaryColor,
           decoration: InputDecoration(
-            prefix: Text(suffix ?? ""),
+            prefix: Text(prefix ?? ""),
             prefixStyle: const TextStyle(color: ColorConstants.primaryColor),
             errorText: error,
             hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey),
             labelText: label,
+            labelStyle: TextStyle(color: ColorConstants.primaryColor),
             fillColor: Colors.white,
             focusColor: Theme.of(context).primaryColor,
             filled: true,
@@ -165,7 +167,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         phoneNumber: phoneNumber);
     settingsProvider
         .updateDataFirestore(
-            FirestoreConstants.pathUserCollection, id, updateInfo.toJson())
+      FirestoreConstants.pathUserCollection,
+      id,
+      updateInfo.toJson(),
+    )
         .then((data) async {
       // await settingsProvider.setPrefs(FirestoreConstants.id, id);
       await settingsProvider.setPrefs(FirestoreConstants.nickname, nickname);
@@ -190,7 +195,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: const Text(AppConstants.settingsTitle),
+        title: const Text(AppConstants.profile),
       ),
       body: Stack(
         children: [
@@ -355,7 +360,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   buildTextField(
-                    suffix: dialCodeDigit,
+                    prefix: dialCodeDigit,
                     label: "Phone Number",
                     hint: "Update Phone Number",
                     error: "",

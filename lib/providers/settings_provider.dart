@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:kurakaani/constants/constants.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsProvider {
@@ -20,7 +21,8 @@ class SettingsProvider {
   }
 
   UploadTask uploadFile(File image, String fileName) {
-    Reference reference = storage.ref().child(fileName);
+    Reference reference =
+        storage.ref().child(FirestoreConstants.pathProfilePic).child(fileName);
     UploadTask uploadTask = reference.putFile(image);
 
     return uploadTask;

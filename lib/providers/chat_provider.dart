@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_native_image/flutter_native_image.dart';
 import 'package:kurakaani/constants/constants.dart';
 import 'package:kurakaani/models/message_chat.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -15,9 +16,17 @@ class ChatProvider {
       {required this.prefs, required this.firestore, required this.storage});
 
   UploadTask uploadFile(File image, String fileName) {
-    Reference reference = storage.ref().child(fileName);
+    Reference reference =
+        storage.ref().child(FirestoreConstants.pathMessagePic).child(fileName);
     UploadTask uploadTask = reference.putFile(image);
     return uploadTask;
+  }
+
+  Future<File> compressImage(
+      {required File image, int quality = 75, percentage = 30}) async {
+    File file = await FlutterNativeImage.compressImage(image.path,
+        quality: quality, percentage: percentage);
+    return file;
   }
 
   Future<void> updateDataFirestore(String collectionPath, String docPath,

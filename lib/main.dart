@@ -3,15 +3,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kurakaani/Constants/app_constants.dart';
-
 import 'package:kurakaani/providers/auth_provider.dart';
 import 'package:kurakaani/providers/chat_provider.dart';
 import 'package:kurakaani/providers/home_provider.dart';
 import 'package:kurakaani/providers/settings_provider.dart';
 import 'package:kurakaani/providers/theme_provider.dart';
+import 'package:kurakaani/screens/login_screen.dart';
 
 import 'package:kurakaani/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
@@ -44,6 +43,7 @@ class MyApp extends StatelessWidget {
               googleSignIn: GoogleSignIn(),
               firebaseAuth: FirebaseAuth.instance,
               firestore: firestore,
+              storage: storage,
               prefs: prefs),
         ),
         Provider(
@@ -72,7 +72,7 @@ class MainApp extends StatelessWidget {
       theme: Themes.lightTheme,
       darkTheme: Themes.darkTheme,
       debugShowCheckedModeBanner: false,
-      home: const SplashScreen(),
+      home: const LoginScreen(),
     );
   }
 }

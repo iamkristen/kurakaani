@@ -57,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Drawer buildDrawer() {
     return Drawer(
       child: Column(
-        // mainAxisSize: MainAxisSize.max,
         children: [
           DrawerHeader(
               child: Column(
@@ -71,7 +70,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: CircleAvatar(
                       backgroundColor: ColorConstants.greyColor2,
                       radius: 50,
-                      backgroundImage: NetworkImage(photoUrl!),
+                      backgroundImage: NetworkImage(settingsProvider!
+                          .getprefs(FirestoreConstants.photoUrl)!),
                       onBackgroundImageError: (exception, stackTrace) {
                         const Icon(
                           Icons.account_circle,
@@ -89,13 +89,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ListTile(
             tileColor: Colors.transparent,
             leading: Icon(
-              Icons.color_lens,
+              Icons.color_lens_outlined,
               color: Theme.of(context).primaryColor,
             ),
             title: const Text(
               AppConstants.darkMode,
             ),
-            trailing: const ThemeButton(),
+            trailing: const ThemeSwitch(),
           ),
           GestureDetector(
             onTap: () {
@@ -118,10 +118,10 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListTile(
               tileColor: Colors.transparent,
               leading: Icon(
-                Icons.settings,
+                Icons.account_circle_outlined,
                 color: Theme.of(context).primaryColor,
               ),
-              title: const Text(AppConstants.settingsTitle),
+              title: const Text(AppConstants.profile),
             ),
           ),
           Expanded(

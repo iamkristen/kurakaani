@@ -3,8 +3,8 @@ import 'package:kurakaani/constants/color_constants.dart';
 import 'package:kurakaani/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 
-class ThemeButton extends StatelessWidget {
-  const ThemeButton({Key? key}) : super(key: key);
+class ThemeSwitch extends StatelessWidget {
+  const ThemeSwitch({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

@@ -75,6 +75,7 @@ class _ChatScreenState extends State<ChatScreen> {
     super.initState();
     authProvider = context.read<AuthProvider>();
     chatProvider = context.read<ChatProvider>();
+    // focusNode
     focusNode.addListener(onFocusChange);
     listScrollController.addListener(_scrollListener);
     readLocal();
@@ -82,10 +83,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   _scrollListener() {
     if (listScrollController.offset >=
-            listScrollController.position.maxScrollExtent &&
-        listScrollController.position.outOfRange) {
+        listScrollController.position.maxScrollExtent) {
       setState(() {
-        _limit += _limitIncrement;
+        _limit = _limit + _limitIncrement;
       });
     }
   }
@@ -144,7 +144,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
   uploadFile() async {
     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-    UploadTask uploadFile = chatProvider.uploadFile(imageFile!, fileName);
+    File files = await chatProvider.compressImage(image: imageFile!);
+    UploadTask uploadFile = chatProvider.uploadFile(
+      files,
+      fileName,
+    );
     try {
       TaskSnapshot snapshot = await uploadFile;
       imgUrl = await snapshot.ref.getDownloadURL();
@@ -196,8 +200,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _callPhoneNumber(String callPhoneNumber) async {
-    String url = "tel:$callPhoneNumber";
-    await launch(url);
+    if (callPhoneNumber.isNotEmpty) {
+      String url = "tel:$callPhoneNumber";
+      await launch(url);
+    } else {
+      Fluttertoast.showToast(msg: "Phone number not available");
+    }
   }
 
   Future<bool> onBackPress() {
@@ -219,7 +227,9 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(
-          peerNickname,
+          peerNickname.contains(" ")
+              ? peerNickname.substring(0, peerNickname.indexOf(" "))
+              : peerNickname,
           style: const TextStyle(
               fontSize: 40, fontFamily: 'signatra', letterSpacing: 1.5),
         ),
@@ -261,7 +271,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget buildInput() {
     return Container(
       width: double.infinity,
-      height: 50,
+      // height: 50,
       decoration: BoxDecoration(
         border: Border(
           top: BorderSide(width: 0.5, color: Theme.of(context).primaryColor),
@@ -281,11 +291,13 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           Flexible(
             child: TextField(
+              autofocus: true,
+              textInputAction: TextInputAction.send,
               onSubmitted: (value) {
                 onSendMessage(textEditingController.text, TypeMessage.text);
               },
               controller: textEditingController,
-              cursorColor: ColorConstants.primaryColor,
+              cursorColor: Theme.of(context).primaryColor,
               decoration: const InputDecoration.collapsed(
                 hintText: "Type Your Message...",
               ),

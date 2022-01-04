@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_login/flutter_login.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kurakaani/constants/constants.dart';
 import 'package:kurakaani/models/chat_user.dart';
@@ -18,6 +22,7 @@ class AuthProvider extends ChangeNotifier {
   final GoogleSignIn googleSignIn;
   final FirebaseAuth firebaseAuth;
   final FirebaseFirestore firestore;
+  final FirebaseStorage storage;
   final SharedPreferences prefs;
   Status _status = Status.uninitialized;
 
@@ -25,13 +30,126 @@ class AuthProvider extends ChangeNotifier {
       {required this.googleSignIn,
       required this.firebaseAuth,
       required this.firestore,
+      required this.storage,
       required this.prefs});
 
   Status get status => _status;
 
+  Future<String> signUp(String nickName, String aboutMe, String email,
+      String password, File? photo) async {
+    String res = "Some error occured";
+    bool isValid = photo != null &&
+        nickName.isNotEmpty &&
+        aboutMe.isNotEmpty &&
+        email.isNotEmpty &&
+        password.isNotEmpty;
+    try {
+      if (isValid == true) {
+        UserCredential credential = await firebaseAuth
+            .createUserWithEmailAndPassword(email: email, password: password);
+        String photoUrl = await uploadPhotoToStorage(
+            FirestoreConstants.pathProfilePic, photo);
+        if (credential.user != null) {
+          firestore
+              .collection(FirestoreConstants.pathUserCollection)
+              .doc(credential.user!.uid)
+              .set({
+            FirestoreConstants.email: credential.user!.email,
+            FirestoreConstants.id: credential.user!.uid,
+            FirestoreConstants.photoUrl: photoUrl,
+            FirestoreConstants.aboutMe: aboutMe,
+            FirestoreConstants.nickname: nickName,
+            "createdAt": DateTime.now().millisecondsSinceEpoch.toString(),
+            FirestoreConstants.chattingWith: null,
+          });
+          res = "Success";
+        }
+      } else {
+        res = "All fields are required*";
+      }
+    } on FirebaseAuthException catch (err) {
+      if (err.code == "invalid-email") {
+        res = "The email is badly formatted";
+      } else if (err.code == "weak-password") {
+        res = "password should be atleast 6 character";
+      } else if (err.code == "email-already-in-use") {
+        res = "Email already in use";
+      } else if (err.code == "network-request-failed") {
+        res = "Network Error";
+      } else {
+        res = err.toString();
+      }
+    }
+    return res;
+  }
+
+  Future<String> login(String email, String password) async {
+    String res = "Error occured";
+    try {
+      if (email.isNotEmpty && password.isNotEmpty) {
+        UserCredential credential = await firebaseAuth
+            .signInWithEmailAndPassword(email: email, password: password);
+
+        if (credential.user != null) {
+          QuerySnapshot snapshot = await firestore
+              .collection(FirestoreConstants.pathUserCollection)
+              .where(FirestoreConstants.id, isEqualTo: credential.user!.uid)
+              .get();
+          List<DocumentSnapshot> document = snapshot.docs;
+          DocumentSnapshot documentSnapshot = document[0];
+          ChatUser user = ChatUser.fromDocuments(documentSnapshot);
+          await prefs.setString(FirestoreConstants.id, user.id);
+          await prefs.setString(FirestoreConstants.nickname, user.nickName);
+          await prefs.setString(FirestoreConstants.photoUrl, user.photoUrl);
+
+          await prefs.setString(
+              FirestoreConstants.phoneNumber, user.phoneNumber);
+          await prefs.setString(FirestoreConstants.aboutMe, user.aboutMe);
+        }
+
+        res = "Success";
+      } else {
+        res = "All fields are required*";
+      }
+    } on FirebaseAuthException catch (err) {
+      if (err.code == "network-request-failed") {
+        res = "Network Error";
+      } else if (err.code == "wrong-password") {
+        res = "Password Incorrect";
+      } else if (err.code == "user-not-found") {
+        res = "User not exists";
+      } else if (err.code == "user-disabled") {
+        res = "Account temporarily suspended!";
+      } else {
+        res = err.toString();
+      }
+    }
+    return res;
+  }
+
+  Future<String> uploadPhotoToStorage(String profilePath, File? file) async {
+    Reference ref =
+        storage.ref().child(profilePath).child(firebaseAuth.currentUser!.uid);
+    TaskSnapshot uploadTask = await ref.putFile(file!);
+    String url = await uploadTask.ref.getDownloadURL();
+    return url;
+  }
+
+  // Future<String> recoverPassword(String name) {
+  //   print('Name: $name');
+  //   return Future.delayed(loginTime).then((_) {
+  //     if (userName != name) {
+  //       return 'Username not exists';
+  //     }
+  //     return "Success";
+  //   });
+  // }
+
+//for UserId
   String? getUserFirebaseId() {
     return prefs.getString(FirestoreConstants.id);
   }
+//Firebase Login with Google
 
   Future<bool> isLoggedIn() async {
     bool isLoggedIn = await googleSignIn.isSignedIn();
@@ -66,7 +184,9 @@ class AuthProvider extends ChangeNotifier {
               .doc(firebaseUser.uid)
               .set({
             FirestoreConstants.nickname: firebaseUser.displayName,
+            FirestoreConstants.email: firebaseUser.email ?? " ",
             FirestoreConstants.photoUrl: firebaseUser.photoURL,
+            FirestoreConstants.aboutMe: "",
             FirestoreConstants.id: firebaseUser.uid,
             "createdAt": DateTime.now().millisecondsSinceEpoch.toString(),
             FirestoreConstants.chattingWith: null,
@@ -78,6 +198,7 @@ class AuthProvider extends ChangeNotifier {
               FirestoreConstants.nickname, currentUser.displayName ?? "");
           await prefs.setString(
               FirestoreConstants.photoUrl, currentUser.photoURL ?? "");
+          await prefs.setString(FirestoreConstants.aboutMe, "");
           await prefs.setString(
               FirestoreConstants.phoneNumber, currentUser.phoneNumber ?? "");
         } else {
@@ -86,6 +207,7 @@ class AuthProvider extends ChangeNotifier {
           await prefs.setString(FirestoreConstants.id, user.id);
           await prefs.setString(FirestoreConstants.nickname, user.nickName);
           await prefs.setString(FirestoreConstants.photoUrl, user.photoUrl);
+
           await prefs.setString(
               FirestoreConstants.phoneNumber, user.phoneNumber);
           await prefs.setString(FirestoreConstants.aboutMe, user.aboutMe);
@@ -107,9 +229,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> handleSignOut() async {
-    _status = Status.uninitialized;
-    await firebaseAuth.signOut();
-    await googleSignIn.disconnect();
-    await googleSignIn.signOut();
+    if (await isLoggedIn()) {
+      _status = Status.uninitialized;
+      await firebaseAuth.signOut();
+      await googleSignIn.disconnect();
+      await googleSignIn.signOut();
+    }
   }
 }
