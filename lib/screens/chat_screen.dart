@@ -11,6 +11,7 @@ import 'package:kurakaani/providers/auth_provider.dart';
 import 'package:kurakaani/providers/chat_provider.dart';
 
 import 'package:kurakaani/screens/full_photo.dart';
+import 'package:kurakaani/screens/home_screen.dart';
 import 'package:kurakaani/screens/login_screen.dart';
 import 'package:kurakaani/widgets/loading_view.dart';
 import 'package:kurakaani/widgets/progress.dart';
@@ -216,7 +217,8 @@ class _ChatScreenState extends State<ChatScreen> {
     } else {
       chatProvider.updateDataFirestore(FirestoreConstants.pathUserCollection,
           currentUserId, {FirestoreConstants.chattingWith: null});
-      Navigator.pop(context);
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => const HomeScreen()));
     }
     return Future.value(false);
   }
@@ -269,47 +271,50 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget buildInput() {
-    return Container(
-      width: double.infinity,
-      // height: 50,
-      decoration: BoxDecoration(
-        border: Border(
-          top: BorderSide(width: 0.5, color: Theme.of(context).primaryColor),
+    return WillPopScope(
+      onWillPop: onBackPress,
+      child: Container(
+        width: double.infinity,
+        // height: 50,
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(width: 0.5, color: Theme.of(context).primaryColor),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(
-              Icons.camera_enhance,
-            ),
-            onPressed: getImage,
-          ),
-          IconButton(
-            icon: const Icon(Icons.face_retouching_natural),
-            onPressed: getSticker,
-          ),
-          Flexible(
-            child: TextField(
-              autofocus: true,
-              textInputAction: TextInputAction.send,
-              onSubmitted: (value) {
-                onSendMessage(textEditingController.text, TypeMessage.text);
-              },
-              controller: textEditingController,
-              cursorColor: Theme.of(context).primaryColor,
-              decoration: const InputDecoration.collapsed(
-                hintText: "Type Your Message...",
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(
+                Icons.camera_enhance,
               ),
-              focusNode: focusNode,
+              onPressed: getImage,
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: () =>
-                onSendMessage(textEditingController.text, TypeMessage.text),
-          ),
-        ],
+            IconButton(
+              icon: const Icon(Icons.face_retouching_natural),
+              onPressed: getSticker,
+            ),
+            Flexible(
+              child: TextField(
+                autofocus: true,
+                textInputAction: TextInputAction.send,
+                onSubmitted: (value) {
+                  onSendMessage(textEditingController.text, TypeMessage.text);
+                },
+                controller: textEditingController,
+                cursorColor: Theme.of(context).primaryColor,
+                decoration: const InputDecoration.collapsed(
+                  hintText: "Type Your Message...",
+                ),
+                focusNode: focusNode,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.send),
+              onPressed: () =>
+                  onSendMessage(textEditingController.text, TypeMessage.text),
+            ),
+          ],
+        ),
       ),
     );
   }

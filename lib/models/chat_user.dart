@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:kurakaani/Constants/firestore_constants.dart';
 
 class ChatUser {

@@ -2,10 +2,12 @@ import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kurakaani/constants/app_constants.dart';
 import 'package:kurakaani/constants/constants.dart';
@@ -33,10 +35,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   TextEditingController searchController = TextEditingController();
-  ScrollController listScrollController = ScrollController();
-  StreamController<bool> btnClearController = StreamController<bool>();
+  StreamController<bool> btnClearController =
+      StreamController<bool>.broadcast();
+  Stream? chatRoomStream;
   GoogleSignIn googleSignIn = GoogleSignIn();
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
   FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -45,13 +48,14 @@ class _HomeScreenState extends State<HomeScreen> {
   SettingsProvider? settingsProvider;
   HomeProvider? homeProvider;
   Debouncer searchDebouncer = Debouncer(millisecond: 300);
-  int _limit = 20;
-  final int _limitIncrement = 20;
+  PageController? pageController;
+  final int _limit = 20;
   String? currentUserId;
   String? photoUrl;
   String? nickname;
   String? _textSearch;
   bool isLoading = false;
+  int? pageIndex = 0;
   FocusNode searchFocusNode = FocusNode();
 
   Drawer buildDrawer() {
@@ -276,16 +280,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return Future.value(false);
   }
 
-  void scrollListener() {
-    if (listScrollController.offset >=
-            listScrollController.position.maxScrollExtent &&
-        !listScrollController.position.outOfRange) {
-      setState(() {
-        _limit += _limitIncrement;
-      });
-    }
-  }
-
   handleSignOut() async {
     await authProvider!.handleSignOut();
     Navigator.pushReplacement(
@@ -345,6 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
+    print("object");
     authProvider = context.read<AuthProvider>();
     settingsProvider = context.read<SettingsProvider>();
     homeProvider = context.read<HomeProvider>();
@@ -357,9 +352,20 @@ class _HomeScreenState extends State<HomeScreen> {
       Navigator.pushReplacement(context,
           MaterialPageRoute(builder: (context) => const LoginScreen()));
     }
-    listScrollController.addListener(scrollListener);
     registerNotification();
     configureLocalNotification();
+    pageController = PageController();
+  }
+
+  void onTap(int pageIndex) {
+    pageController!.animateToPage(pageIndex,
+        duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+  }
+
+  void onPageChanged(int pageIndex) {
+    setState(() {
+      this.pageIndex = pageIndex;
+    });
   }
 
   @override
@@ -369,7 +375,6 @@ class _HomeScreenState extends State<HomeScreen> {
         searchFocusNode.unfocus();
       },
       child: Scaffold(
-        key: _scaffoldKey,
         appBar: AppBar(
           centerTitle: true,
           title: const Text(
@@ -387,114 +392,29 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         drawer: buildDrawer(),
-        body: WillPopScope(
-          onWillPop: onBackPress,
-          child: Stack(children: [
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 4.0),
-                  child: TextFormField(
-                    focusNode: searchFocusNode,
-                    textInputAction: TextInputAction.search,
-                    controller: searchController,
-                    cursorColor: Theme.of(context).primaryColor,
-                    onChanged: (value) {
-                      if (value.isNotEmpty) {
-                        btnClearController.add(true);
-                        setState(() {
-                          _textSearch = value;
-                        });
-                      } else {
-                        btnClearController.add(false);
-                        setState(() {
-                          _textSearch = "";
-                        });
-                      }
-                    },
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                          vertical: 4.0, horizontal: 15.0),
-                      hintText: AppConstants.search,
-                      enabledBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Theme.of(context).primaryColor),
-                        borderRadius: BorderRadius.circular(35.0),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Theme.of(context).primaryColor),
-                        borderRadius: BorderRadius.circular(35.0),
-                      ),
-                    ),
-                  ),
-                ),
-                StreamBuilder(
-                    stream: btnClearController.stream,
-                    builder: (context, snapshot) {
-                      return snapshot.data == true
-                          ? Container(
-                              margin: const EdgeInsets.only(bottom: 5),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(45),
-                                color:
-                                    ColorConstants.greyColor2.withOpacity(.4),
-                              ),
-                              child: IconButton(
-                                  onPressed: () {
-                                    btnClearController.add(false);
-                                    searchController.clear();
-                                    setState(() {
-                                      _textSearch = "";
-                                    });
-                                  },
-                                  icon: Icon(
-                                    Icons.clear_rounded,
-                                    color: Theme.of(context).primaryColor,
-                                    size: 25,
-                                  )),
-                            )
-                          : const SizedBox.shrink();
-                    }),
-                StreamBuilder<QuerySnapshot>(
-                  stream: homeProvider!.getStreamFirestore(_textSearch ?? "",
-                      FirestoreConstants.pathUserCollection, _limit),
-                  builder: (BuildContext context,
-                      AsyncSnapshot<QuerySnapshot> snapshot) {
-                    if (snapshot.hasData) {
-                      if (snapshot.data!.docs.isNotEmpty) {
-                        return Expanded(
-                          child: ListView.builder(
-                              itemCount: snapshot.data!.docs.length,
-                              controller: listScrollController,
-                              itemBuilder: (context, index) {
-                                return UserResult(
-                                  document: snapshot.data!.docs[index],
-                                  currentUserId: currentUserId!,
-                                );
-                              }),
-                        );
-                      } else {
-                        return const Center(
-                          child: Text("No User Found"),
-                        );
-                      }
-                    } else {
-                      return circularProgress();
-                    }
-                  },
-                ),
-              ],
+        body: PageView(
+          children: [
+            chatRoomsList(),
+            allUserList(),
+          ],
+          controller: pageController,
+          onPageChanged: onPageChanged,
+        ),
+        bottomNavigationBar: CupertinoTabBar(
+          currentIndex: pageIndex!,
+          onTap: onTap,
+          activeColor: Theme.of(context).primaryColor,
+          inactiveColor: Colors.grey,
+          items: const [
+            BottomNavigationBarItem(
+              label: "Chats",
+              icon: Icon(FontAwesomeIcons.facebookMessenger),
             ),
-            Positioned(
-                child:
-                    isLoading ? const LoadingView() : const SizedBox.shrink()),
-          ]),
+            BottomNavigationBarItem(
+              label: "Peoples",
+              icon: Icon(FontAwesomeIcons.users),
+            ),
+          ],
         ),
       ),
     );
@@ -504,6 +424,250 @@ class _HomeScreenState extends State<HomeScreen> {
   void dispose() {
     super.dispose();
     btnClearController.close();
+    pageController!.dispose();
+  }
+
+  Widget allUserList() {
+    return WillPopScope(
+      onWillPop: onBackPress,
+      child: Stack(children: [
+        Column(
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+              child: TextFormField(
+                focusNode: searchFocusNode,
+                textInputAction: TextInputAction.search,
+                controller: searchController,
+                cursorColor: Theme.of(context).primaryColor,
+                onChanged: (value) {
+                  if (value.isNotEmpty) {
+                    btnClearController.add(true);
+                    setState(() {
+                      _textSearch = value;
+                    });
+                  } else {
+                    btnClearController.add(false);
+                    setState(() {
+                      _textSearch = "";
+                    });
+                  }
+                },
+                decoration: InputDecoration(
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: Theme.of(context).primaryColor,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                      vertical: 4.0, horizontal: 15.0),
+                  hintText: AppConstants.search,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide:
+                        BorderSide(color: Theme.of(context).primaryColor),
+                    borderRadius: BorderRadius.circular(35.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide:
+                        BorderSide(color: Theme.of(context).primaryColor),
+                    borderRadius: BorderRadius.circular(35.0),
+                  ),
+                ),
+              ),
+            ),
+            StreamBuilder(
+                stream: btnClearController.stream,
+                builder: (context, snapshot) {
+                  return snapshot.data == true
+                      ? Container(
+                          margin: const EdgeInsets.only(bottom: 5),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(45),
+                            color: ColorConstants.greyColor2.withOpacity(.4),
+                          ),
+                          child: IconButton(
+                              onPressed: () {
+                                btnClearController.add(false);
+                                searchController.clear();
+                                setState(() {
+                                  _textSearch = "";
+                                });
+                              },
+                              icon: Icon(
+                                Icons.clear_rounded,
+                                color: Theme.of(context).primaryColor,
+                                size: 25,
+                              )),
+                        )
+                      : const SizedBox.shrink();
+                }),
+            StreamBuilder<QuerySnapshot>(
+              stream: homeProvider!.getStreamFirestore(_textSearch ?? "",
+                  FirestoreConstants.pathUserCollection, _limit),
+              builder: (BuildContext context,
+                  AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasData) {
+                  if (snapshot.data!.docs.isNotEmpty) {
+                    return Expanded(
+                      child: ListView.builder(
+                          itemCount: snapshot.data!.docs.length,
+                          itemBuilder: (context, index) {
+                            return UserResult(
+                              document: snapshot.data!.docs[index],
+                              currentUserId: currentUserId!,
+                            );
+                          }),
+                    );
+                  } else {
+                    return const Center(
+                      child: Text("No User Found"),
+                    );
+                  }
+                } else {
+                  return circularProgress();
+                }
+              },
+            ),
+          ],
+        ),
+        Positioned(
+            child: isLoading ? const LoadingView() : const SizedBox.shrink()),
+      ]),
+    );
+  }
+
+  Widget chatRoomsList() {
+    btnClearController.close();
+    return WillPopScope(
+      onWillPop: onBackPress,
+      child: StreamBuilder<QuerySnapshot>(
+          stream: homeProvider!.getChatRooms(currentUserId!),
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.hasData) {
+              if (snapshot.data!.docs.isNotEmpty) {
+                return ListView.builder(
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      DocumentSnapshot document = snapshot.data!.docs[index];
+                      return ChatRoomsUserListTile(
+                          userId: currentUserId!,
+                          lastMessage: document['message'],
+                          chatRoomId: document.id);
+                    });
+              } else {
+                return const Center(
+                  child: Text("No Message Found"),
+                );
+              }
+            } else {
+              return circularProgress();
+            }
+          }),
+    );
+  }
+}
+
+class ChatRoomsUserListTile extends StatefulWidget {
+  const ChatRoomsUserListTile(
+      {Key? key,
+      required this.userId,
+      required this.lastMessage,
+      required this.chatRoomId})
+      : super(key: key);
+
+  final String userId;
+  final String lastMessage;
+  final String chatRoomId;
+
+  @override
+  _ChatRoomsUserListTileState createState() => _ChatRoomsUserListTileState();
+}
+
+class _ChatRoomsUserListTileState extends State<ChatRoomsUserListTile> {
+  String? imgUrl, name, userId, phoneNumber;
+  HomeProvider? homeProvider;
+
+  getThisUserInfo() async {
+    setState(() {});
+    userId = widget.chatRoomId
+        .replaceAll(widget.userId, "")
+        .replaceAll("-", "")
+        .trim();
+    QuerySnapshot snapshot = await homeProvider!.getUserInfo(userId!);
+    name = snapshot.docs[0]['nickname'];
+    imgUrl = snapshot.docs[0]['photoUrl'];
+    phoneNumber = snapshot.docs[0]["phoneNumber"];
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    homeProvider = context.read<HomeProvider>();
+    getThisUserInfo();
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (name != null) {
+      return GestureDetector(
+          onTap: () {
+            if (Utilities.isKeyboardShowing()) {
+              Utilities.closeKeyboard(context);
+            }
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(
+                  peerId: userId!,
+                  peerAvtar: imgUrl!,
+                  peerNickname: name!,
+                  peerPhoneNumber: phoneNumber!,
+                ),
+              ),
+            );
+          },
+          child: ListTile(
+            leading: imgUrl != null
+                ? CircleAvatar(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    radius: 21,
+                    child: CircleAvatar(
+                      radius: 20,
+                      onBackgroundImageError: (error, stackTrace) {
+                        Icon(
+                          Icons.account_circle,
+                          size: 50,
+                          color: Theme.of(context).primaryColor,
+                        );
+                      },
+                      backgroundImage: NetworkImage(
+                        imgUrl.toString(),
+                      ),
+                    ),
+                  )
+                : Icon(
+                    Icons.account_circle,
+                    size: 50,
+                    color: Theme.of(context).primaryColor,
+                  ),
+            title: Text(name!,
+                maxLines: 1,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyText1!
+                    .copyWith(fontWeight: FontWeight.bold, fontSize: 14)),
+            subtitle: Text(
+              widget.lastMessage,
+              maxLines: 1,
+              style: const TextStyle(fontSize: 12),
+            ),
+          ));
+    } else {
+      return const SizedBox.shrink();
+    }
   }
 }
 

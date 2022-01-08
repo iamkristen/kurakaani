@@ -39,30 +39,50 @@ class ChatProvider {
 
   Stream<QuerySnapshot> getChatSnapshot(String groupChatId, int limit) {
     return firestore
-        .collection(FirestoreConstants.pathMessageCollection)
+        .collection(FirestoreConstants.pathChatroomsCollection)
         .doc(groupChatId)
-        .collection(groupChatId)
+        .collection(FirestoreConstants.pathChatCollection)
         .orderBy(FirestoreConstants.timestamp, descending: true)
         .limit(limit)
         .snapshots();
   }
 
-  void sendMessage(String content, int type, String groupChatId,
-      String currentUserId, String peerId) {
+  Future sendMessage(String content, int type, String groupChatId,
+      String currentUserId, String peerId) async {
     DocumentReference reference = firestore
-        .collection(FirestoreConstants.pathMessageCollection)
+        .collection(FirestoreConstants.pathChatroomsCollection)
         .doc(groupChatId)
-        .collection(groupChatId)
+        .collection(FirestoreConstants.pathChatCollection)
         .doc(Timestamp.now().millisecondsSinceEpoch.toString());
+
+    firestore
+        .collection(FirestoreConstants.pathChatroomsCollection)
+        .doc(groupChatId)
+        .set({
+      "message": content,
+      "lastMessageSendBy": currentUserId,
+      "timestamp": DateTime.now(),
+      "users": [currentUserId, peerId]
+    });
+
     MsgChat msgChat = MsgChat(
         idFrom: currentUserId,
         idTo: peerId,
         timestamp: Timestamp.now().millisecondsSinceEpoch.toString(),
         content: content,
         type: type);
-    FirebaseFirestore.instance.runTransaction((transaction) async {
+
+    return FirebaseFirestore.instance.runTransaction((transaction) async {
       transaction.set(reference, msgChat.toJson());
     });
+  }
+
+  updateLastMessageSend(
+      String chatRoomId, Map<String, dynamic> lastMessageInfo) {
+    firestore
+        .collection(FirestoreConstants.pathChatroomsCollection)
+        .doc(chatRoomId)
+        .update(lastMessageInfo);
   }
 }
 

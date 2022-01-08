@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -11,6 +10,8 @@ import 'package:kurakaani/constants/constants.dart';
 import 'package:kurakaani/providers/auth_provider.dart';
 import 'package:kurakaani/providers/settings_provider.dart';
 import 'package:kurakaani/screens/home_screen.dart';
+import 'package:kurakaani/screens/reset_screen.dart';
+import 'package:kurakaani/screens/verify_screen.dart';
 import 'package:kurakaani/utils/utilities.dart';
 import 'package:provider/provider.dart';
 
@@ -177,11 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
         _loading = Loading.done;
       });
       successSnackbar("Your account is registered successfully.");
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() {
-          isLogin = true;
-        });
-      });
+
+      handleSignIn();
     }
   }
 
@@ -196,11 +194,18 @@ class _LoginScreenState extends State<LoginScreen> {
       isLoading = true;
     });
     res = await authProvider!.login(email.text, password.text);
-    if (res != "Success") {
-      errorSnackbar(res!);
-    } else {
+    if (res == "Success") {
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => const HomeScreen()));
+    } else if (res == "not-verified") {
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) => VerifyScreen(
+                    email: email.text,
+                  )));
+    } else {
+      errorSnackbar(res!);
     }
     setState(() {
       isLoading = false;
@@ -353,7 +358,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget loginWidget() {
     return Container(
-        key: Key("login"),
+        key: const Key("login"),
         margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
         decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
@@ -372,14 +377,29 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
           child: Column(children: [
-            buildInputFeild(
-                Icons.email_rounded, context, email, "Email", "Email"),
+            buildInputFeild(Icons.email_rounded, context, email,
+                "iamkristen220@gmail.com", "Email"),
             buildPasswordFeild(
               Icons.lock_rounded,
               context,
               password,
+              "********",
               "Password",
-              "Password",
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const ResetScreen()));
+              },
+              child: Text(
+                "Forgot Password?",
+                style: Theme.of(context)
+                    .textTheme
+                    .headline2!
+                    .copyWith(fontSize: 15),
+              ),
             ),
             buildButton(
               () {
@@ -471,7 +491,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget signupWidget() {
     return Container(
-      key: Key("signup"),
+      key: const Key("signup"),
       margin: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
       decoration: BoxDecoration(
           color: Theme.of(context).cardColor,

@@ -10,7 +10,6 @@ import 'package:kurakaani/providers/chat_provider.dart';
 import 'package:kurakaani/providers/home_provider.dart';
 import 'package:kurakaani/providers/settings_provider.dart';
 import 'package:kurakaani/providers/theme_provider.dart';
-import 'package:kurakaani/screens/login_screen.dart';
 
 import 'package:kurakaani/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
@@ -49,7 +48,8 @@ class MyApp extends StatelessWidget {
         Provider(
             create: (_) => SettingsProvider(
                 prefs: prefs, firestore: firestore, storage: storage)),
-        Provider(create: (_) => HomeProvider(firestore: firestore)),
+        Provider(
+            create: (_) => HomeProvider(firestore: firestore, prefs: prefs)),
         Provider(
           create: (_) => ChatProvider(
               prefs: prefs, firestore: firestore, storage: storage),
@@ -72,7 +72,7 @@ class MainApp extends StatelessWidget {
       theme: Themes.lightTheme,
       darkTheme: Themes.darkTheme,
       debugShowCheckedModeBanner: false,
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }

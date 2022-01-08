@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_login/flutter_login.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kurakaani/constants/constants.dart';
 import 'package:kurakaani/models/chat_user.dart';
@@ -45,8 +44,9 @@ class AuthProvider extends ChangeNotifier {
         password.isNotEmpty;
     try {
       if (isValid == true) {
-        UserCredential credential = await firebaseAuth
-            .createUserWithEmailAndPassword(email: email, password: password);
+        UserCredential credential =
+            await firebaseAuth.createUserWithEmailAndPassword(
+                email: email.trim(), password: password.trim());
         String photoUrl = await uploadPhotoToStorage(
             FirestoreConstants.pathProfilePic, photo);
         if (credential.user != null) {
@@ -87,10 +87,11 @@ class AuthProvider extends ChangeNotifier {
     String res = "Error occured";
     try {
       if (email.isNotEmpty && password.isNotEmpty) {
-        UserCredential credential = await firebaseAuth
-            .signInWithEmailAndPassword(email: email, password: password);
+        UserCredential credential =
+            await firebaseAuth.signInWithEmailAndPassword(
+                email: email.trim(), password: password.trim());
 
-        if (credential.user != null) {
+        if (credential.user!.emailVerified) {
           QuerySnapshot snapshot = await firestore
               .collection(FirestoreConstants.pathUserCollection)
               .where(FirestoreConstants.id, isEqualTo: credential.user!.uid)
@@ -105,9 +106,10 @@ class AuthProvider extends ChangeNotifier {
           await prefs.setString(
               FirestoreConstants.phoneNumber, user.phoneNumber);
           await prefs.setString(FirestoreConstants.aboutMe, user.aboutMe);
+          res = "Success";
+        } else {
+          res = "not-verified";
         }
-
-        res = "Success";
       } else {
         res = "All fields are required*";
       }
@@ -135,15 +137,28 @@ class AuthProvider extends ChangeNotifier {
     return url;
   }
 
-  // Future<String> recoverPassword(String name) {
-  //   print('Name: $name');
-  //   return Future.delayed(loginTime).then((_) {
-  //     if (userName != name) {
-  //       return 'Username not exists';
-  //     }
-  //     return "Success";
-  //   });
-  // }
+  Future<String> resetPassword(String email) async {
+    String res = "Provide email";
+    if (email.trim().isNotEmpty) {
+      try {
+        await firebaseAuth.sendPasswordResetEmail(email: email.trim());
+        res = "success";
+      } on FirebaseAuthException catch (err) {
+        if (err.code == "invalid-email") {
+          res = "The email is badly formatted";
+        } else if (err.code == "user-not-found") {
+          res = "User not exists";
+        } else if (err.code == "user-disabled") {
+          res = "Account temporarily suspended!";
+        } else if (err.code == "network-request-failed") {
+          res = "Network Error";
+        } else {
+          res = err.toString();
+        }
+      }
+    }
+    return res;
+  }
 
 //for UserId
   String? getUserFirebaseId() {
@@ -153,6 +168,9 @@ class AuthProvider extends ChangeNotifier {
 
   Future<bool> isLoggedIn() async {
     bool isLoggedIn = await googleSignIn.isSignedIn();
+    if (firebaseAuth.currentUser != null) {
+      isLoggedIn = firebaseAuth.currentUser!.uid.isNotEmpty;
+    }
     if (isLoggedIn &&
         prefs.getString(FirestoreConstants.id)!.isNotEmpty == true) {
       return true;
@@ -229,11 +247,15 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<void> handleSignOut() async {
-    if (await isLoggedIn()) {
+    if (await googleSignIn.isSignedIn()) {
       _status = Status.uninitialized;
       await firebaseAuth.signOut();
       await googleSignIn.disconnect();
       await googleSignIn.signOut();
+      prefs.setString(FirestoreConstants.id, "");
+    } else {
+      await FirebaseAuth.instance.signOut();
+      prefs.setString(FirestoreConstants.id, "");
     }
   }
 }

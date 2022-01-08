@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class ColorConstants {
   static const primaryColor = Color(0xFFdc2f02);
-  static const primaryText = Color(0xFF03071e);
+  static const primaryText = Colors.black;
   static const secondaryText = Colors.white;
   static const appBarColor = Color(0xFFdc2f02);
   static const scaffoldColor = Color(0xFFffffff);
