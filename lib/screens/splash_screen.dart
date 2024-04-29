@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ModalBottomSheetRoute;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kurakaani/constants/app_constants.dart';
 import 'package:kurakaani/constants/constants.dart';
@@ -17,7 +17,7 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   void checkSignedIn() async {
-    AuthProvider authProvider = context.read<AuthProvider>();
+    KurakaaniAuthProvider authProvider = context.read<KurakaaniAuthProvider>();
     bool isLoggedIn = await authProvider.isLoggedIn();
     if (isLoggedIn == true) {
       Navigator.pushReplacement(

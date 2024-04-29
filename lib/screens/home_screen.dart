@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ModalBottomSheetRoute;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
   FlutterLocalNotificationsPlugin notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  AuthProvider? authProvider;
+  KurakaaniAuthProvider? authProvider;
   SettingsProvider? settingsProvider;
   HomeProvider? homeProvider;
   Debouncer searchDebouncer = Debouncer(millisecond: 300);
@@ -314,8 +314,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void configureLocalNotification() {
     AndroidInitializationSettings androidInitializationSettings =
         const AndroidInitializationSettings('launcher_icon');
-    IOSInitializationSettings iosInitializationSettings =
-        const IOSInitializationSettings();
+    DarwinInitializationSettings iosInitializationSettings =
+        const DarwinInitializationSettings();
     InitializationSettings initializationSettings = InitializationSettings(
         android: androidInitializationSettings, iOS: iosInitializationSettings);
     FlutterLocalNotificationsPlugin().initialize(initializationSettings);
@@ -328,8 +328,8 @@ class _HomeScreenState extends State<HomeScreen> {
             enableVibration: true,
             importance: Importance.high,
             priority: Priority.high);
-    IOSNotificationDetails iosNotificationDetails =
-        const IOSNotificationDetails();
+    DarwinNotificationDetails iosNotificationDetails =
+        const DarwinNotificationDetails();
     NotificationDetails notificationDetails = NotificationDetails(
         android: androidNotificationDetails, iOS: iosNotificationDetails);
     await FlutterLocalNotificationsPlugin().show(0, remoteNotification.title,
@@ -339,8 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void initState() {
-    print("object");
-    authProvider = context.read<AuthProvider>();
+    authProvider = context.read<KurakaaniAuthProvider>();
     settingsProvider = context.read<SettingsProvider>();
     homeProvider = context.read<HomeProvider>();
     photoUrl = settingsProvider!.getprefs(FirestoreConstants.photoUrl);
@@ -597,7 +596,10 @@ class _ChatRoomsUserListTileState extends State<ChatRoomsUserListTile> {
     QuerySnapshot snapshot = await homeProvider!.getUserInfo(userId!);
     name = snapshot.docs[0]['nickname'];
     imgUrl = snapshot.docs[0]['photoUrl'];
-    phoneNumber = snapshot.docs[0]["phoneNumber"];
+
+    // phoneNumber = snapshot.docs[0]["phoneNumber"] == ""
+    //     ? snapshot.docs[0]["phoneNumber"]
+    //     : "00000000";
     setState(() {});
   }
 
@@ -624,7 +626,7 @@ class _ChatRoomsUserListTileState extends State<ChatRoomsUserListTile> {
                   peerId: userId!,
                   peerAvtar: imgUrl!,
                   peerNickname: name!,
-                  peerPhoneNumber: phoneNumber!,
+                  peerPhoneNumber: phoneNumber ?? "00000000",
                 ),
               ),
             );

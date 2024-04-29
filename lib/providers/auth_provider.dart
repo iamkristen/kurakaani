@@ -17,7 +17,7 @@ enum Status {
   authenticateCancel,
 }
 
-class AuthProvider extends ChangeNotifier {
+class KurakaaniAuthProvider extends ChangeNotifier {
   final GoogleSignIn googleSignIn;
   final FirebaseAuth firebaseAuth;
   final FirebaseFirestore firestore;
@@ -25,7 +25,7 @@ class AuthProvider extends ChangeNotifier {
   final SharedPreferences prefs;
   Status _status = Status.uninitialized;
 
-  AuthProvider(
+  KurakaaniAuthProvider(
       {required this.googleSignIn,
       required this.firebaseAuth,
       required this.firestore,

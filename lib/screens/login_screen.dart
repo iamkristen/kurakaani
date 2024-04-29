@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ModalBottomSheetRoute;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,7 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? imgUrl;
   String? userId;
   String? res;
-  AuthProvider? authProvider;
+  KurakaaniAuthProvider? authProvider;
   SettingsProvider? settingsProvider;
   bool _obscureText = true;
   bool isLogin = true;
@@ -214,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    authProvider = Provider.of<AuthProvider>(context);
+    authProvider = Provider.of<KurakaaniAuthProvider>(context);
     settingsProvider = Provider.of<SettingsProvider>(context);
 
     switch (authProvider!.status) {

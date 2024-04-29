@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ModalBottomSheetRoute;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:kurakaani/providers/auth_provider.dart';
 import 'package:kurakaani/utils/utilities.dart';
@@ -13,7 +13,7 @@ class ResetScreen extends StatefulWidget {
 
 class _ResetScreenState extends State<ResetScreen> {
   TextEditingController email = TextEditingController();
-  AuthProvider? authProvider;
+  KurakaaniAuthProvider? authProvider;
   bool isLoading = false;
   bool isSuccess = false;
 
@@ -188,7 +188,7 @@ class _ResetScreenState extends State<ResetScreen> {
 
   @override
   Widget build(BuildContext context) {
-    authProvider = Provider.of<AuthProvider>(context);
+    authProvider = Provider.of<KurakaaniAuthProvider>(context);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,

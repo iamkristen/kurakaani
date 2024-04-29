@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ModalBottomSheetRoute;
 
 class LoadingView extends StatelessWidget {
   const LoadingView({Key? key}) : super(key: key);

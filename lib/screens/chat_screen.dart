@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ModalBottomSheetRoute;
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -69,12 +69,12 @@ class _ChatScreenState extends State<ChatScreen> {
   FocusNode focusNode = FocusNode();
 
   late ChatProvider chatProvider;
-  late AuthProvider authProvider;
+  late KurakaaniAuthProvider authProvider;
 
   @override
   void initState() {
     super.initState();
-    authProvider = context.read<AuthProvider>();
+    authProvider = context.read<KurakaaniAuthProvider>();
     chatProvider = context.read<ChatProvider>();
     // focusNode
     focusNode.addListener(onFocusChange);

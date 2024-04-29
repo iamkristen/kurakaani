@@ -2,6 +2,7 @@
     package="com.hostbala.kurakaani">
    <application
         android:label="kurakaani"
+        android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"

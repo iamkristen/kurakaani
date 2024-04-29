@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide ModalBottomSheetRoute;
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:kurakaani/Constants/app_constants.dart';
 import 'package:kurakaani/providers/auth_provider.dart';
@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(
-          create: (_) => AuthProvider(
+          create: (_) => KurakaaniAuthProvider(
               googleSignIn: GoogleSignIn(),
               firebaseAuth: FirebaseAuth.instance,
               firestore: firestore,
